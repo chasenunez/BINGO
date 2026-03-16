@@ -1,10 +1,10 @@
 /* Simple responsive CSS for the bingo app */
 :root{
-  --bg:#f5f7fb;
+  --bg:#FFFFFF;
   --card:#fff;
-  --accent:#1e90ff;
-  --muted:#666;
-  --success:#28a745;
+  --accent:#D3C88F;
+  --muted:#8ECD99;
+  --success:#002640;
 }
 
 *{box-sizing:border-box}
@@ -12,7 +12,24 @@ html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,Segoe U
 .container{max-width:920px;margin:24px auto;padding:16px}
 h1{margin:0 0 12px;font-size:1.6rem}
 .lead{color:var(--muted);margin-bottom:16px}
-.buttons{display:flex;gap:12px;flex-wrap:wrap}
+.buttons{
+  display:flex;
+  justify-content:center;
+  gap:12px;
+  flex-wrap:wrap;
+}
+.logo{
+  display:block;
+  margin:0 auto;
+  max-width:90%;
+  height:auto;
+}
+.gif{
+  display:block;
+  margin:0 auto;
+  max-width:80%;
+  height:auto;
+}
 .btn{display:inline-block;padding:10px 14px;background:transparent;border:1px solid #cfd8e3;border-radius:8px;text-decoration:none;color:#111;cursor:pointer}
 .btn.small{padding:6px 8px;font-size:0.9rem}
 .btn.primary{background:var(--accent);color:#fff;border:none}
