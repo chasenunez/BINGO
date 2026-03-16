@@ -68,13 +68,6 @@ This repository contains the full app (Node + Express backend + static frontend)
 
 4. Open the app at [http://localhost:3000](http://localhost:3000). The first run will create `data/store.json.enc` encrypted with your `SECRET_KEY`.
 
-
-# Contributing
-
-This project is intentionally small and modular. Contributions are welcome (bug fixes, UI improvements, accessibility enhancements, localization). Please open an issue describing the change and include a short patch or pull request.
-
-If you are a data steward or educator and would like help customizing the app for a workshop (phrases, branding, or adding collector metadata for evidence), open an issue and I can propose a minimal patch.
-
 # License
 
 This project is provided under the Apache License. See `LICENSE` (or add one) for details.
