@@ -5,6 +5,8 @@
 # OGNIB
 This is a small, lightweight web application originally created as an outreach and engagement tool for researchers. It helps teams and trainees demonstrate and celebrate good data practices (e.g., "Write a README", "Publish your data in a repository") in an interactive bingo format. The app is intentionally general-purpose and can also be used for workshops, onboarding, community events, or any setting where people want to mark and link evidence of completed tasks.
 
+![RDMBingoHeader](public/assets/overview.png)
+
 This repository contains the full app (Node + Express backend + static frontend). All user data (accounts, boards, winners) are stored in a single AES-GCM–encrypted JSON file on the host. Passwords are hashed with `bcrypt`. This design keeps the code small, auditable, and appropriate for small-scale deployments such as workshops, departmental demos, or research-group use.
 
 * Each completed bingo entry can be linked to live evidence (a DOI, repository record, README file, pull request, or project page).
