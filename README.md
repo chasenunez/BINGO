@@ -2,7 +2,6 @@
 ![RDMBingoHeader](public/assets/RDMBingo.png)
 
 
-# OGNIB
 This is a small, lightweight web application originally created as an outreach and engagement tool for researchers. It helps teams and trainees demonstrate and celebrate good data practices (e.g., "Write a README", "Publish your data in a repository") in an interactive bingo format. The app is intentionally general-purpose and can also be used for workshops, onboarding, community events, or any setting where people want to mark and link evidence of completed tasks.
 
 ![RDMBingoHeader](public/assets/overview.png)
