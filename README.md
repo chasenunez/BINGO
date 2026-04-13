@@ -2,11 +2,11 @@
 ![RDMBingoHeader](public/assets/RDMBingo.png)
 
 
-This MMO Bingo web application was created as an outreach and engagement tool for researchers. It provides an online way for teams and trainees to demonstrate and celebrate good data practices (e.g., "Write a README", "Publish your data in a repository") in an interactive bingo format. The app is pretty general-purpose though, so the same nuts and bolts can be used for workshops, onboarding, community events, or any setting where people want to mark and link evidence of completed tasks.
+This MMO Bingo web application was created as an outreach and engagement tool for researchers. It provides an online way for users to demonstrate and celebrate good data practices (e.g., "Write a README", "Publish your data in a repository") in an interactive bingo format. The app is pretty general-purpose though, so the same nuts and bolts can be used for workshops, onboarding, community events, or any setting where people want to mark and link evidence of completed tasks.
 
 ![RDMBingoHeader](public/assets/overview.png)
 
-This repository contains the full app (Node + Express backend + static frontend). All user data (accounts, boards, winners) are stored in a single AES-GCM–encrypted JSON file on the host. Passwords are hashed with `bcrypt`. This causes some minor hurdles for local setup (see below), but is generally appropriate for small-scale deployments ( like workshops, departmental demos, or research-group use), but larger deployment will require some rethininking to scale the log-in credential storage. 
+This repository contains the full app (Node + Express backend + static frontend). All user data (accounts, boards, winners) are stored in a single AES-GCM–encrypted JSON file on the host. Passwords are hashed with `bcrypt`. This causes some minor hurdles for local setup (see below), but is generally appropriate for small-scale deployments (like workshops, departmental demos, or research-group use), but larger deployment will require some rethininking to scale the log-in credential storage. 
 
 * Each completed bingo entry can be linked to live evidence (a DOI, repository record, README file, pull request, or project page). That way the wins can be audited by whoever needs to do that, and also serves as a cool way for folks to share their accomplishments. 
 * Winners are recorded (one winner entry per account) and presented with a thumbnail of their board so evidence is discoverable. Also the links for the completed squares remain usable. 
@@ -78,24 +78,20 @@ Or if you prefer:
 
 # Security for server deployment
 
-When deploying this application on a server accessible via the internet, follow these steps to harden security:
+When deploying on a server, we obviously need to get rid of the hard coded key. So:
 
-## Required environment variables
-
-Set **both** of these as environment variables on your server. **Never** hard-code them in source code or commit them to version control.
+1. Set **both** of these as environment variables on the server
 
 | Variable | Purpose | How to generate |
 |---|---|---|
 | `SECRET_KEY` | Encrypts the data file at rest (AES-256-GCM) | `openssl rand -hex 48` |
 | `SESSION_SECRET` | Signs session cookies so they can't be tampered with | `openssl rand -hex 48` |
 
-If `SESSION_SECRET` is not set, the server will generate a random one at startup. This means **all user sessions will be invalidated every time the server restarts**. For production, always set it explicitly.
+If `SESSION_SECRET` is not set, the server will generate a random one at startup. This means **all user sessions will be invalidated every time the server restarts**. So for roll out, we need to set it explicitly, and make sure it is available.
 
-## Deployment checklist
+2. Place the app behind a reverse proxy that terminates TLS (HTTPS). Session cookies are `httpOnly` but not marked `secure` by default, so with HTTPS in front this is handled at the proxy layer.
 
-1. **Use HTTPS.** Place the app behind a reverse proxy (e.g., Nginx, Caddy, or a cloud load balancer) that terminates TLS. Session cookies are `httpOnly` but not marked `secure` by default — with HTTPS in front this is handled at the proxy layer.
-
-2. **Set environment variables securely.** Use your hosting platform's secrets manager (e.g., Render environment variables, Docker secrets, systemd `EnvironmentFile`, etc.). Never pass secrets as command-line arguments — they are visible in process listings.
+3. Use a secrets manager (e.g., Render environment variables, Docker secrets, systemd `EnvironmentFile`, etc.). Command-line arguments are visible in process listings.
 
    Example with a `.env` file (keep `.env` in `.gitignore`):
    ```bash
@@ -106,16 +102,16 @@ If `SESSION_SECRET` is not set, the server will generate a random one at startup
 
    Then load with something like [dotenv](https://www.npmjs.com/package/dotenv) or your init system.
 
-3. **Restrict file permissions** on the `data/` directory so only the application's user can read/write the encrypted store:
+4. Restrict file permissions on the `data/` directory so only the application's user can read/write the encrypted store:
    ```bash
    chmod 700 data/
    ```
 
-4. **Back up `data/store.json.enc` regularly.** The entire database is a single file — if it's corrupted or lost, all data is gone. A simple cron job can copy it to a safe location.
+4. Back up `data/store.json.enc` regularly. The entire database is a single file — if it's corrupted or lost, all data is gone. A simple cron job can copy it to a safe location.
 
-5. **Consider rate limiting.** The app does not currently include rate limiting. For public-facing deployments, use your reverse proxy or a middleware like [express-rate-limit](https://www.npmjs.com/package/express-rate-limit) to protect against brute-force login attempts.
+5. Consider rate limiting using the reverse proxy as the app does not currently include rate limiting natively.
 
-6. **Firewall and access.** Only expose the port the app listens on (default `3000`) through your reverse proxy. Do not expose it directly to the internet.
+6. Only expose the port the app listens on (default `3000`) through the reverse proxy. i.e. do not expose it directly to the internet.
 
 # License
 
