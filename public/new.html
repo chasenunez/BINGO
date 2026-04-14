@@ -14,6 +14,10 @@
       <label>Name<input name="name" required /></label>
       <label>Email<input type="email" name="email" required /></label>
       <label>Password<input type="password" name="password" required minlength="6" /></label>
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+        <input type="checkbox" name="useAnonymous" id="useAnonymous" style="width:auto;margin:0" />
+        <span>Display me anonymously (you'll be assigned a fun name like "COOL CROCODILE")</span>
+      </label>
       <div class="row">
         <button class="btn primary" type="submit">Create & Play bingo!</button>
         <a href="/" class="btn">Cancel</a>

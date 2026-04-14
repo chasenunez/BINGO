@@ -14,7 +14,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       const left = document.createElement('div');
       left.style.flex = '1';
-      left.innerHTML = `<strong>${escapeHtml(w.name)}</strong><div class="muted">on ${new Date(w.createdAt).toLocaleString()}</div>`;
+      // Use displayName (anonymous or real); fall back to name for legacy entries
+      const shown = w.displayName || w.name || 'Anonymous';
+      left.innerHTML = `<strong>${escapeHtml(shown)}</strong><div class="muted">on ${new Date(w.createdAt).toLocaleString()}</div>`;
 
       const small = document.createElement('div');
       small.className = 'small-board';

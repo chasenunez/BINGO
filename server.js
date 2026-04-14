@@ -20,6 +20,14 @@ const Store = require('./lib/store');
 
 const PORT = process.env.PORT || 3000;
 const SECRET_KEY = process.env.SECRET_KEY;
+const ADMIN_TOKEN = process.env.ADMIN_TOKEN || null;
+
+if (!ADMIN_TOKEN) {
+  console.warn('WARNING: ADMIN_TOKEN not set. Admin API endpoints will return 503.');
+  console.warn('Set ADMIN_TOKEN env var to enable user management via scripts/admin.js.');
+} else if (ADMIN_TOKEN.length < 32) {
+  console.warn('WARNING: ADMIN_TOKEN is shorter than 32 characters. Use a stronger token.');
+}
 
 // SESSION_SECRET: use env var if set, otherwise generate a random one (ephemeral)
 let SESSION_SECRET = process.env.SESSION_SECRET;
@@ -46,12 +54,36 @@ app.use(bodyParser.json());
 app.use(cookieParser(SESSION_SECRET));
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Constant-time bearer-token check for the admin API. Returns true only if
+// ADMIN_TOKEN is set AND the provided token matches exactly.
+function isValidAdminToken(headerValue) {
+  if (!ADMIN_TOKEN) return false;
+  if (typeof headerValue !== 'string') return false;
+  const m = headerValue.match(/^Bearer\s+(.+)$/);
+  if (!m) return false;
+  const provided = Buffer.from(m[1], 'utf8');
+  const expected = Buffer.from(ADMIN_TOKEN, 'utf8');
+  if (provided.length !== expected.length) return false;
+  return crypto.timingSafeEqual(provided, expected);
+}
+
+function requireAdmin(req, res, next) {
+  if (!ADMIN_TOKEN) {
+    return res.status(503).json({ error: 'Admin API is not configured on this server' });
+  }
+  if (!isValidAdminToken(req.headers.authorization)) {
+    return res.status(403).json({ error: 'Invalid or missing admin token' });
+  }
+  next();
+}
+
 // Middlewares
 function requireAuth(req, res, next) {
   const sessionId = req.signedCookies['sid'];
   if (!sessionId) return res.status(401).json({ error: 'Not signed in' });
   const user = store.getUserBySession(sessionId);
   if (!user) return res.status(401).json({ error: 'Session invalid' });
+  if (user.deletedAt) return res.status(401).json({ error: 'Account no longer exists' });
   req.user = user;
   req.sessionId = sessionId;
   next();
@@ -61,7 +93,7 @@ function requireAuth(req, res, next) {
 
 // Sign up
 app.post('/api/signup', async (req, res) => {
-  const { name, email, password } = req.body || {};
+  const { name, email, password, useAnonymous } = req.body || {};
   if (!name || !email || !password) return res.status(400).json({ error: 'Missing fields' });
 
   const exists = store.getUserByEmail(email);
@@ -72,13 +104,21 @@ app.post('/api/signup', async (req, res) => {
   const defaultPhrases = store.defaultPhrases();
   const board = defaultPhrases.map((p) => ({ phrase: p, url: null, description: null }));
 
+  // displayName is used everywhere public; name is the real name (admin-only and "signed in as")
+  const isAnonymous = !!useAnonymous;
+  const displayName = isAnonymous ? store.generateAnonymousName() : name;
+
   const user = {
     id: uuidv4(),
     name,
     email,
     passwordHash: hashed,
     board,   // 25 entries
-    createdAt: new Date().toISOString()
+    createdAt: new Date().toISOString(),
+    displayName,
+    isAnonymous,
+    wonAt: null,
+    deletedAt: null
   };
 
   store.addUser(user);
@@ -97,6 +137,7 @@ app.post('/api/signin', async (req, res) => {
 
   const user = store.getUserByEmail(email);
   if (!user) return res.status(400).json({ error: 'Invalid credentials' });
+  if (user.deletedAt) return res.status(400).json({ error: 'Invalid credentials' });
 
   const match = await bcrypt.compare(password, user.passwordHash);
   if (!match) return res.status(400).json({ error: 'Invalid credentials' });
@@ -174,14 +215,16 @@ app.post('/api/bingo', requireAuth, (req, res) => {
     return res.status(400).json({ error: 'No bingo detected on your board' });
   }
 
+  const now = new Date().toISOString();
   const winner = {
     id: uuidv4(),
     userId: req.user.id,
-    name: req.user.name,
+    displayName: req.user.displayName || req.user.name,
     snapshot: board,
-    createdAt: new Date().toISOString()
+    createdAt: now
   };
   store.addWinner(winner);
+  store.setUserWonAt(req.user.id, now);
   store.save();
   res.json({ ok: true });
 });
@@ -216,6 +259,33 @@ function hasBingo(bools) {
 app.get('/api/winners', (req, res) => {
   const winners = store.getWinners();
   res.json({ winners });
+});
+
+// ----- Admin API -----
+// All admin endpoints require a Bearer token matching ADMIN_TOKEN env var.
+// The server itself is the only writer to the encrypted store, so there are
+// no race conditions with the admin script.
+
+// List every user (active and soft-deleted)
+app.get('/api/admin/users', requireAdmin, (req, res) => {
+  res.json({ users: store.getAllUsersForAdmin() });
+});
+
+// Soft-delete a user by email
+app.post('/api/admin/users/delete', requireAdmin, (req, res) => {
+  const { email } = req.body || {};
+  if (!email || typeof email !== 'string') {
+    return res.status(400).json({ error: 'Missing email' });
+  }
+  const user = store.getUserByEmail(email);
+  if (!user) return res.status(404).json({ error: 'User not found' });
+  if (user.deletedAt) {
+    return res.status(409).json({ error: `User already deleted at ${user.deletedAt}` });
+  }
+  const ok = store.markUserDeleted(user.id);
+  if (!ok) return res.status(500).json({ error: 'Deletion failed' });
+  store.save();
+  res.json({ ok: true, deletedEmail: email, deletedName: user.name });
 });
 
 // Serve app (static files handled by express.static)

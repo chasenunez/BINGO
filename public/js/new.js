@@ -9,7 +9,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const payload = {
       name: fd.get('name').trim(),
       email: fd.get('email').trim(),
-      password: fd.get('password')
+      password: fd.get('password'),
+      useAnonymous: !!fd.get('useAnonymous')
     };
     try {
       await api('/api/signup', { method: 'POST', body: JSON.stringify(payload) });
