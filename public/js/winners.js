@@ -49,6 +49,12 @@ document.addEventListener('DOMContentLoaded', async () => {
           a.setAttribute('aria-label', phrase || 'Linked bingo box');
           a.appendChild(hidden);
           sc.appendChild(a);
+        } else if (cell && cell.filled) {
+          // anonymous winner's completed square: green, not clickable, no
+          // hover tooltip (the evidence link and description are withheld).
+          sc.classList.add('linked', 'linked-anonymous');
+          sc.setAttribute('aria-label', 'Completed bingo box');
+          sc.appendChild(hidden);
         } else {
           // unlinked: neutral, not clickable, show phrase tooltip on hover
           sc.classList.add('unlinked');

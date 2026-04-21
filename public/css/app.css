@@ -164,6 +164,13 @@ h1{margin:0 0 12px;font-size:1.6rem}
   outline-offset: 2px;
 }
 
+/* Anonymous winners: completed squares are shown green but the evidence
+   URL and description are withheld, so the cell is not clickable and
+   should not advertise itself as interactive. */
+.small-cell.linked-anonymous {
+  cursor: default;
+}
+
 /* Unlinked (no URL) small-cell: neutral color, not clickable but shows tooltip on hover */
 .small-cell.unlinked {
   background: linear-gradient(180deg, #f1f5f9, #f8fafc);
