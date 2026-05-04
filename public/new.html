@@ -4,11 +4,11 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>New User - Bingo</title>
-  <link rel="stylesheet" href="/css/app.css" />
+  <link rel="stylesheet" href="css/app.css" />
 </head>
 <body>
   <main class="container">
-    <center> <img src="/assets/RDMBINGOLONG.png" alt="RDM Bingo Sign Up" height = 55 ></center> <br>
+    <center> <img src="assets/RDMBINGOLONG.png" alt="RDM Bingo Sign Up" height = 55 ></center> <br>
     <h1>Create account</h1>
     <p>To be eligible for a prize, please sign up using your <strong>institutional email address</strong>. If you'd like to hide your name and work from the winners board, please make sure to check the box to make your account anonymous.</p>
     <form id="signupForm" class="form">
@@ -19,15 +19,32 @@
         <input type="checkbox" name="useAnonymous" id="useAnonymous" style="width:auto;margin:0" />
         <span>Display me anonymously (you'll be assigned a fun name like "COOL CROCODILE")</span>
       </label>
+      <div class="privacy-block">
+        <p class="privacy-summary">
+          To create your RDM Bingo account, Lib4RI will store your name, email, password (hashed),
+          and the URLs and descriptions you submit. If you complete a bingo and choose to submit
+          it, your nickname and submissions appear publicly on the Winners page &mdash; unless you
+          tick "Display me anonymously" above. Your data is stored encrypted on Eawag-hosted
+          Swiss servers and deleted within 90 days after the campaign closes on 1&nbsp;July&nbsp;2026.
+        </p>
+        <p>
+          Full details: <a href="privacy.html" target="_blank" rel="noopener">Privacy Notice</a>
+          (opens in a new tab).
+        </p>
+        <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer">
+          <input type="checkbox" name="privacyAck" id="privacyAck" required style="width:auto;margin:3px 0 0 0" />
+          <span>I have read the Privacy Notice. <span aria-hidden="true" style="color:#b00020">*</span></span>
+        </label>
+      </div>
       <div class="row">
         <button class="btn primary" type="submit">Create & Play bingo!</button>
-        <a href="/" class="btn">Cancel</a>
+        <a href="." class="btn">Cancel</a>
       </div>
     </form>
     <div id="msg" class="msg"></div>
   </main>
 
-  <script src="/js/common.js"></script>
-  <script src="/js/new.js"></script>
+  <script src="js/common.js"></script>
+  <script src="js/new.js"></script>
 </body>
 </html>
