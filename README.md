@@ -76,6 +76,66 @@ Or if you prefer:
 
 4. Open the app at [http://localhost:3000](http://localhost:3000). The first run will create `data/store.json.enc` encrypted with your `SECRET_KEY`.
 
+# Hosting under a subpath (`BASE_PATH`)
+
+The app can be served either at the root of a domain (`https://bingo.example.org/`) or under a subpath of a larger site (`https://www.example.org/bingo/`). All client-side URLs in the HTML and JS are written as **relative paths**, so the browser resolves them against whatever URL the page was loaded from — no rebuild needed when the mount point changes.
+
+For server-side support, set the `BASE_PATH` env var:
+
+```bash
+# Root deploy (default)
+# BASE_PATH unset
+
+# Subpath deploy
+export BASE_PATH="/bingo"
+```
+
+When `BASE_PATH` is set, the server:
+
+- Mounts every static file and API route under that prefix (so the app responds at `https://example.org/bingo/api/winners`, not `/api/winners`).
+- Scopes the session cookie's `Path` attribute to `BASE_PATH`, so the cookie isn't sent to sibling apps on the same domain.
+- Adds a redirect from `/` to `BASE_PATH/` so a user who lands on the bare root sees the app.
+
+## Recommended production env vars
+
+| Variable | Example | Purpose |
+|---|---|---|
+| `BASE_PATH` | `/bingo` | URL prefix the app is mounted under. Leave unset for root. |
+| `COOKIE_SECURE` | `true` | Flags the session cookie `Secure` so it's only sent over HTTPS. **Set this in production.** Leave unset for local HTTP development. |
+| `TRUST_PROXY` | `1` | Number of reverse-proxy hops to trust for `X-Forwarded-*` headers. Auto-set to `1` if `BASE_PATH` or `COOKIE_SECURE` is set. |
+
+## Reverse-proxy configuration
+
+The reverse proxy must forward `X-Forwarded-Proto` so `req.protocol` reports `https` correctly. The two common patterns:
+
+**Pattern A — proxy keeps the prefix, app expects it (recommended).** Set `BASE_PATH=/bingo` on the app. nginx config:
+
+```nginx
+location /bingo/ {
+    proxy_pass http://localhost:3000;          # NO trailing slash
+    proxy_set_header Host              $host;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+}
+```
+
+**Pattern B — proxy strips the prefix, app sees `/`.** Leave `BASE_PATH` unset. nginx config:
+
+```nginx
+location /bingo/ {
+    proxy_pass http://localhost:3000/;         # WITH trailing slash — strips /bingo
+    proxy_set_header Host              $host;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+}
+```
+
+Pattern A is preferred because the cookie ends up scoped to `/bingo` (not the whole domain), and the app's logged URLs match what the user sees.
+
+## Note for contributors
+
+All URLs in HTML/JS must remain **relative** (no leading `/`). A leading slash would break subpath hosting. See the comment at the top of `public/js/common.js`.
+
 # License
 
 This project is provided under the Apache License. See `LICENSE` for details.
