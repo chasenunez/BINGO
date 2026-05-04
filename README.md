@@ -136,6 +136,63 @@ Pattern A is preferred because the cookie ends up scoped to `/bingo` (not the wh
 
 All URLs in HTML/JS must remain **relative** (no leading `/`). A leading slash would break subpath hosting. See the comment at the top of `public/js/common.js`.
 
+# Privacy & data protection
+
+The app is published with a **Privacy Notice** at `public/privacy.html`, with translations at `public/privacy.de.html` and `public/privacy.fr.html`. Every page links to it via the auto-injected footer in `public/js/common.js`, and the registration form (`public/new.html`) links to it from a required acknowledgement checkbox.
+
+## What the code enforces
+
+- **Acknowledgement checkbox.** The signup endpoint (`POST /api/signup`) rejects requests where `privacyAck !== true`, regardless of what the browser sent. The version, timestamp, and boolean are written to the user record (`privacyAck.version`, `privacyAck.acknowledgedAt`, `privacyAck.value`) for audit purposes.
+- **Privacy Notice version.** Hard-coded as `PRIVACY_NOTICE_VERSION` near the top of `server.js`. Bump this string whenever the substantive content of `privacy.html` changes (e.g. `1.0-en` → `1.1-en`).
+- **HSTS header.** Set automatically when `COOKIE_SECURE=true` (i.e. behind an HTTPS reverse proxy). Disabled in HTTP dev so it doesn't pollute your browser's HSTS cache. Header value: `max-age=31536000; includeSubDomains`.
+- **Last-sign-in tracking.** The signup and signin endpoints record `lastSignInAt`, used by the retention job below to identify inactive accounts.
+
+## Retention job
+
+`scripts/retention.js` enforces the retention policy stated in §5 of the Privacy Notice. It talks to the running server via the same admin HTTP API as `scripts/admin.js`, so there are no race conditions and no downtime is required.
+
+Three deletion criteria, in order of precedence:
+
+1. **Winners past the prize-delivery cut-off** (180 days after `CAMPAIGN_END_DATE`).
+2. **Non-winners past the post-campaign cut-off** (90 days after `CAMPAIGN_END_DATE`).
+3. **Inactive accounts** (no sign-in for 365 days, applied year-round).
+
+Each threshold is configurable via env var. Defaults match the Privacy Notice:
+
+| Env var | Default | Meaning |
+|---|---|---|
+| `CAMPAIGN_END_DATE` | `2026-07-01` | The date on which the campaign closes. |
+| `POST_CAMPAIGN_DAYS` | `90` | Grace period after `CAMPAIGN_END_DATE` for non-winners. |
+| `PRIZE_GRACE_DAYS` | `180` | Maximum prize-delivery window for winners. |
+| `INACTIVE_DAYS` | `365` | Sign-in inactivity threshold (always-on). |
+
+Usage:
+
+```bash
+# Dry-run (report what would be deleted, no writes)
+ADMIN_TOKEN="..." node scripts/retention.js
+
+# Actually apply
+ADMIN_TOKEN="..." node scripts/retention.js --apply
+```
+
+Recommended cron entry on the production host (daily at 02:30):
+
+```cron
+30 2 * * *  ADMIN_TOKEN=... /usr/bin/node /opt/bingo/scripts/retention.js --apply >> /var/log/bingo/retention.log 2>&1
+```
+
+The script logs each deletion with email + user-id and a reason. Per the Privacy Notice, the data itself is gone after deletion — only the deletion record remains.
+
+## When the Privacy Notice changes
+
+When you change the substantive content of `privacy.html` (or its translations):
+
+1. Update the "Last updated" date and version number at the top of each language file.
+2. Bump `PRIVACY_NOTICE_VERSION` in `server.js` so new sign-ups record the new version.
+3. Append an entry to your privacy-changelog page (planned, not yet in repo).
+4. If existing users are still active, email them a one-line note pointing at the new version before it takes effect for them.
+
 # License
 
 This project is provided under the Apache License. See `LICENSE` for details.
