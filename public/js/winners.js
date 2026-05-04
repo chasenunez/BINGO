@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', async () => {
   const el = document.getElementById('winnersList');
   try {
-    const data = await api('/api/winners');
+    const data = await api('api/winners');
     const winners = data.winners || [];
     if (winners.length === 0) {
       el.textContent = 'No winners yet.';

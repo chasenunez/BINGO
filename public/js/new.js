@@ -10,12 +10,17 @@ document.addEventListener('DOMContentLoaded', () => {
       name: fd.get('name').trim(),
       email: fd.get('email').trim(),
       password: fd.get('password'),
-      useAnonymous: !!fd.get('useAnonymous')
+      useAnonymous: !!fd.get('useAnonymous'),
+      privacyAck: !!fd.get('privacyAck')
     };
+    if (!payload.privacyAck) {
+      showMsg(msg, 'You must acknowledge the Privacy Notice to register.', true);
+      return;
+    }
     try {
-      await api('/api/signup', { method: 'POST', body: JSON.stringify(payload) });
+      await api('api/signup', { method: 'POST', body: JSON.stringify(payload) });
       // redirect to board
-      window.location = '/board.html';
+      window.location = 'board.html';
     } catch (err) {
       showMsg(msg, err.message || 'Sign up failed', true);
     }

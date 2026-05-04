@@ -16,14 +16,14 @@ function init() {
 
 async function fetchBoard() {
   try {
-    const data = await api('/api/board');
+    const data = await api('api/board');
     state.board = data.board;
     state.name = data.name;
     document.getElementById('welcome').textContent = `Signed in as ${state.name}`;
     renderBoard();
   } catch (err) {
     // redirect to sign in if not authenticated
-    window.location = '/signin.html';
+    window.location = 'signin.html';
   }
 }
 
@@ -99,7 +99,7 @@ function setupModals() {
   const bingoModal = document.getElementById('bingoModal');
   document.getElementById('bingoSubmit').addEventListener('click', async () => {
     try {
-      await api('/api/bingo', { method: 'POST', body: JSON.stringify({}) });
+      await api('api/bingo', { method: 'POST', body: JSON.stringify({}) });
       // Generate and show the badge instead of redirecting immediately
       document.getElementById('bingoSubmit').disabled = true;
       document.getElementById('bingoSubmit').textContent = 'Submitted!';
@@ -112,7 +112,7 @@ function setupModals() {
     closeBingoModal();
     // If already submitted, go to winners page
     if (document.getElementById('bingoSubmit').disabled) {
-      window.location = '/winners.html';
+      window.location = 'winners.html';
     }
   });
 }
@@ -145,7 +145,7 @@ function showUrlError(msg) {
 
 async function saveCellUrl(index, urlOrNull, descOrNull) {
   try {
-    await api('/api/board/update', {
+    await api('api/board/update', {
       method: 'POST',
       body: JSON.stringify({ index, url: urlOrNull, description: descOrNull })
     });
@@ -225,8 +225,8 @@ function hasBingo(bools) {
 }
 
 async function signout() {
-  await api('/api/signout', { method: 'POST' });
-  window.location = '/';
+  await api('api/signout', { method: 'POST' });
+  window.location = '.';
 }
 
 // Badge generation: composites social_card.png with the user's bingo board
@@ -240,7 +240,7 @@ async function generateBadge() {
   await new Promise((resolve, reject) => {
     bg.onload = resolve;
     bg.onerror = reject;
-    bg.src = '/assets/social_card.png';
+    bg.src = 'assets/social_card.png';
   });
 
   // Use the image's natural dimensions

@@ -11,8 +11,8 @@ document.addEventListener('DOMContentLoaded', () => {
       password: fd.get('password')
     };
     try {
-      await api('/api/signin', { method: 'POST', body: JSON.stringify(payload) });
-      window.location = '/board.html';
+      await api('api/signin', { method: 'POST', body: JSON.stringify(payload) });
+      window.location = 'board.html';
     } catch (err) {
       showMsg(msg, err.message || 'Sign in failed', true);
     }
