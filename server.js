@@ -4,8 +4,6 @@
  *
  * Stores all data in an encrypted JSON file via lib/store.js
  * Sessions are handled with a simple signed cookie (small session id).
- *
- * WARNING: For production you'd want a proper DB and stronger session management.
  */
 
 const express = require('express');
