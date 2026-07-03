@@ -188,6 +188,24 @@ Recommended cron entry on the production host (daily at 02:30):
 
 The script logs each deletion with email + user-id and a reason. Per the Privacy Notice, the data itself is gone after deletion — only the deletion record remains.
 
+## Verifying winners (revealing an anonymous user's evidence)
+
+The public Winners page deliberately hides the URLs and descriptions submitted by users who signed up in anonymous mode. When you need to verify a winner's evidence before awarding a prize, use the admin CLI:
+
+```bash
+ADMIN_TOKEN="..." node scripts/admin.js board <winner-email>
+```
+
+This prints a header (real name, anonymous nickname, timestamps, filled/25) followed by each filled square with its URL and description. Add `--json` for machine-readable output. The request goes through the same Bearer-token-authenticated admin API as `list` and `delete`, so the server stays online and the same audit conditions apply.
+
+If the server is down (or you don't have network access to it and *do* have access to the encrypted store on disk plus the `SECRET_KEY`), there is a one-off fallback:
+
+```bash
+SECRET_KEY="..." node scripts/reveal-board.js <winner-email>
+```
+
+This decrypts `data/store.json.enc` in place, without going through the running server, and prints the same information. Prefer the CLI version — it leaves a cleaner audit trail and doesn't require the caller to hold `SECRET_KEY`.
+
 ## When the Privacy Notice changes
 
 When you change the substantive content of `privacy.html` (or its translations):

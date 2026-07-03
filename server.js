@@ -370,6 +370,31 @@ router.get('/api/admin/users', requireAdmin, (req, res) => {
   res.json({ users: store.getAllUsersForAdmin() });
 });
 
+// Inspect a specific user's board, including URL evidence and descriptions.
+// This is the ONE admin endpoint that reveals data the public Winners page
+// deliberately hides for anonymous users. Used to verify winners before
+// awarding prizes. Bearer-token auth means the audit trail is the same as
+// for list/delete.
+router.get('/api/admin/users/board', requireAdmin, (req, res) => {
+  const email = (req.query && req.query.email) || '';
+  if (!email || typeof email !== 'string') {
+    return res.status(400).json({ error: 'Missing email query parameter' });
+  }
+  const user = store.getUserByEmail(email);
+  if (!user) return res.status(404).json({ error: 'User not found' });
+  res.json({
+    email: user.email,
+    name: user.name,
+    displayName: user.displayName || user.name,
+    isAnonymous: !!user.isAnonymous,
+    createdAt: user.createdAt || null,
+    lastSignInAt: user.lastSignInAt || null,
+    wonAt: user.wonAt || null,
+    deletedAt: user.deletedAt || null,
+    board: user.board || []
+  });
+});
+
 // Soft-delete a user by email
 router.post('/api/admin/users/delete', requireAdmin, (req, res) => {
   const { email } = req.body || {};

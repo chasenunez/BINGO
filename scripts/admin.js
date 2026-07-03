@@ -12,6 +12,8 @@
  *
  *   ADMIN_TOKEN="..." node scripts/admin.js list
  *   ADMIN_TOKEN="..." node scripts/admin.js list --json
+ *   ADMIN_TOKEN="..." node scripts/admin.js board <email>
+ *   ADMIN_TOKEN="..." node scripts/admin.js board <email> --json
  *   ADMIN_TOKEN="..." node scripts/admin.js delete <email>
  *   node scripts/admin.js help
  *
@@ -40,6 +42,11 @@ RDM Bingo admin CLI
 Commands:
   list                  Show all users (table format)
   list --json           Show all users (JSON output)
+  board <email>         Show a user's board with URLs + descriptions
+                        (used to verify a winner's evidence — reveals data
+                        that is hidden on the public Winners page for
+                        anonymous accounts)
+  board <email> --json  Same, as JSON
   delete <email>        Soft-delete the user with the given email
   help                  Show this message
 
@@ -165,6 +172,63 @@ async function main() {
     } else {
       formatTable(body.users);
     }
+    return;
+  }
+
+  if (cmd === 'board') {
+    const email = args[1];
+    if (!email) {
+      console.error('ERROR: please provide an email. Usage: board <email>');
+      process.exit(1);
+    }
+    const { status, body } = await request('GET',
+      '/api/admin/users/board?email=' + encodeURIComponent(email));
+    if (status === 503) {
+      console.error('ERROR: The server has no ADMIN_TOKEN configured. Set it and restart.');
+      process.exit(1);
+    }
+    if (status === 403) {
+      console.error('ERROR: Token rejected. Make sure ADMIN_TOKEN matches the server\'s.');
+      process.exit(1);
+    }
+    if (status === 404) {
+      console.error(`ERROR: no user found with email "${email}"`);
+      process.exit(1);
+    }
+    if (status !== 200) {
+      console.error(`ERROR: server returned HTTP ${status}:`, body);
+      process.exit(1);
+    }
+    if (args.includes('--json')) {
+      console.log(JSON.stringify(body, null, 2));
+      return;
+    }
+    // Human-readable output — same shape as scripts/reveal-board.js
+    const u = body;
+    console.log('');
+    console.log('User:         ' + u.name + ' <' + u.email + '>');
+    console.log('Display name: ' + (u.displayName || u.name) +
+      (u.isAnonymous ? ' (anonymous mode)' : ''));
+    console.log('Created:      ' + (u.createdAt || '-'));
+    console.log('Last sign-in: ' + (u.lastSignInAt || '-'));
+    console.log('Won at:       ' + (u.wonAt || '-'));
+    if (u.deletedAt) console.log('DELETED at:   ' + u.deletedAt);
+    const board = u.board || [];
+    const filled = board.filter(c => c && c.url);
+    console.log('');
+    console.log('Filled squares (' + filled.length + '/25):');
+    if (filled.length === 0) {
+      console.log('  (none)');
+    } else {
+      board.forEach((cell, i) => {
+        if (!cell || !cell.url) return;
+        const idx = String(i).padStart(2, ' ');
+        console.log('  [' + idx + '] ' + (cell.phrase || '(no phrase)'));
+        console.log('       URL:  ' + cell.url);
+        console.log('       Desc: ' + (cell.description || '(no description)'));
+      });
+    }
+    console.log('');
     return;
   }
 
