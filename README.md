@@ -1,5 +1,6 @@
 
 ![RDMBingoHeader](public/assets/RDMBingo.png)
+[![DOI](https://zenodo.org/badge/1179692782.svg)](https://doi.org/10.5281/zenodo.22206734)
 
 
 This MMO Bingo web application was created as an outreach and engagement tool for researchers currently being hosted at [lib4ri.ch/bingo](https://www.lib4ri.ch/bingo/). It provides an online way for users to demonstrate and celebrate good data practices (e.g., "Write a README", "Publish your data in a repository") in an interactive bingo format. The app is pretty general-purpose though, so the same nuts and bolts can be used for workshops, onboarding, community events, or any setting where people want to mark and link evidence of completed tasks.
