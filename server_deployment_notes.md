@@ -1,5 +1,12 @@
 # Bingo App — Deployment Guide (Debian 11)
 
+> These notes cover the bare-metal install: Node on the host, managed by
+> systemd. For the containerized deployment, which is the recommended option
+> now, see [CONTAINER.md](CONTAINER.md). The two are interchangeable from the
+> reverse proxy's point of view: both listen on `localhost:3000`, so the
+> Apache configuration in section 6 below applies to either.
+
+
 ## 1. Install Node.js
 
 Install Node.js 22 system-wide via NodeSource:

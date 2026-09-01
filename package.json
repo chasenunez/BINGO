@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Simple encrypted-file bingo web app",
   "main": "server.js",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "start": "node server.js"
   },

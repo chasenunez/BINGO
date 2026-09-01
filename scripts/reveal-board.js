@@ -47,8 +47,12 @@ const path = require('path');
 const crypto = require('crypto');
 
 const SECRET_KEY = process.env.SECRET_KEY;
-const STORE_PATH = process.env.STORE_FILE_PATH ||
-  path.join(__dirname, '..', 'data', 'store.json.enc');
+// Resolve exactly the way server.js does: relative values are taken against
+// the repo root, not the current working directory, so the same
+// STORE_FILE_PATH value works for the server and for this script.
+const STORE_PATH = process.env.STORE_FILE_PATH
+  ? path.resolve(path.join(__dirname, '..'), process.env.STORE_FILE_PATH)
+  : path.join(__dirname, '..', 'data', 'store.json.enc');
 const email = process.argv[2];
 
 if (!SECRET_KEY) {

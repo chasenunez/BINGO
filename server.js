@@ -70,9 +70,19 @@ if (!SECRET_KEY) {
   process.exit(1);
 }
 
+// STORE_FILE_PATH: where the encrypted data file lives. Defaults to
+// ./data/store.json.enc next to this file, which is what a plain `node
+// server.js` checkout expects. Containers override it so the file can sit on
+// a mounted volume (e.g. /data/store.json.enc) that outlives the container.
+// Relative values are resolved against this directory, not the process CWD,
+// so the app behaves the same whichever directory it is started from.
+const STORE_FILE_PATH = process.env.STORE_FILE_PATH
+  ? path.resolve(__dirname, process.env.STORE_FILE_PATH)
+  : path.join(__dirname, 'data', 'store.json.enc');
+
 // initialize store
 const store = new Store({
-  filePath: path.join(__dirname, 'data', 'store.json.enc'),
+  filePath: STORE_FILE_PATH,
   secretKey: SECRET_KEY
 });
 
@@ -412,6 +422,12 @@ router.post('/api/admin/users/delete', requireAdmin, (req, res) => {
   res.json({ ok: true, deletedEmail: email, deletedName: user.name });
 });
 
+// Liveness probe for container orchestrators and uptime monitors. Mounted at
+// the true root rather than inside the router, so the check URL stays the
+// same no matter what BASE_PATH is set to. It deliberately reports nothing
+// about users or data — it only says the process is up and serving.
+app.get('/healthz', (req, res) => res.json({ ok: true }));
+
 // Mount the entire app under BASE_PATH (or "/" if unset).
 app.use(BASE_PATH || '/', router);
 
@@ -426,6 +442,7 @@ store.init().then(() => {
   app.listen(PORT, () => {
     const display = `http://localhost:${PORT}${BASE_PATH || ''}/`;
     console.log(`Bingo app listening at ${display}`);
+    console.log(`(Data file: ${STORE_FILE_PATH})`);
     if (BASE_PATH) console.log(`(Mounted under BASE_PATH="${BASE_PATH}")`);
     if (COOKIE_SECURE) console.log('(Session cookie flagged Secure — only sent over HTTPS)');
   });

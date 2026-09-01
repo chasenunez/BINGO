@@ -1,0 +1,35 @@
+# Keep the build context small and free of anything host- or secret-specific.
+# Everything listed here is either rebuilt inside the image, irrelevant to it,
+# or must never be baked into a layer.
+
+# Installed inside the image for the target platform (bcrypt is a native
+# module, so host-built binaries would not run in the container).
+node_modules/
+
+# Version control and editor cruft
+.git/
+.gitignore
+.DS_Store
+**/.DS_Store
+*.swp
+
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+
+# Live data. The store is mounted as a volume at runtime, never copied in.
+data/
+
+# Logs and local scratch
+*.log
+logs/
+npm-debug.log*
+
+# Container files themselves and docs, none of which the app needs at runtime
+Dockerfile
+docker-compose.yml
+CONTAINER.md
+README.md
+server_deployment_notes.md
+winners.txt

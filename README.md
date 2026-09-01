@@ -25,10 +25,28 @@ This repository contains the full app (Node + Express backend + static frontend)
 * `data/` — (ignored) where `store.json.enc` is created by the app unless you set a custom path
 * `scripts/` — optional maintenance scripts (e.g., dedupe winners)
 * `package.json` — Node deps and start script
+* `Dockerfile`, `docker-compose.yml`, `CONTAINER.md` — containerized deployment
+
+# Running in a container
+
+The app ships with a Dockerfile and Compose file. This is the recommended way
+to deploy it and to keep it runnable long-term, since the Node version and
+every dependency are pinned inside the image.
+
+```bash
+cp .env.example .env   # then fill in the secrets
+```
+
+```bash
+docker compose up -d --build
+```
+
+See [CONTAINER.md](CONTAINER.md) for deploying changes, backups, running the
+admin scripts, and archiving a known-good build.
 
 # Requirements
 
-* Node.js 16+ (recommended: Node 18+)
+* Node.js 22+ (the container image pins 22.21.0)
 * npm
 * A host for deployment that supports a persistent filesystem for the encrypted data file (or a refactor to a DB/object store). Example hosts: Render (with persistent disk), a small VPS, Docker + volume, or local machine.
 

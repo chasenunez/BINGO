@@ -1,0 +1,75 @@
+# RDM Bingo, containerized.
+#
+#   docker compose up -d --build     start (or restart after a code change)
+#   docker compose logs -f           follow logs
+#   docker compose down              stop; the data volume is kept
+#
+# Configuration comes from a .env file next to this one. Copy .env.example to
+# .env and fill in the secrets before the first run.
+
+services:
+  bingo:
+    build:
+      context: .
+      args:
+        # Traceability: stamps the image with the commit it was built from.
+        # Falls back to "unknown" when the variables are not set.
+        GIT_COMMIT: ${GIT_COMMIT:-unknown}
+        BUILD_DATE: ${BUILD_DATE:-unknown}
+    image: rdm-bingo:${IMAGE_TAG:-local}
+    container_name: bingo
+
+    # Restart on failure and on host reboot, but stay down if an operator
+    # deliberately stopped the container.
+    restart: unless-stopped
+
+    # Gives the container a real PID 1, so `docker compose down` stops the app
+    # in a second rather than waiting out the 10-second kill timeout.
+    init: true
+
+    # Secrets and settings are read from .env, never baked into the image.
+    env_file:
+      - .env
+
+    environment:
+      # Fixed by the image layout; the volume below is mounted at /data.
+      STORE_FILE_PATH: /data/store.json.enc
+      NODE_ENV: production
+
+    ports:
+      # Bound to localhost only: the app speaks plain HTTP and expects a
+      # reverse proxy (Apache/nginx/Traefik) to terminate TLS in front of it.
+      # Change to "3000:3000" only if you genuinely want it on all interfaces.
+      - "127.0.0.1:${HOST_PORT:-3000}:3000"
+
+    volumes:
+      # The encrypted store. This is the only stateful thing in the system and
+      # it survives image rebuilds, container recreation, and `compose down`.
+      - bingo-data:/data
+
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+
+    # Modest hardening. The app only ever writes to /data, so the rest of the
+    # filesystem can stay read-only.
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+volumes:
+  bingo-data:
+    # Named rather than anonymous so it is easy to find, back up, and keep
+    # across `docker compose down`. See CONTAINER.md for backup commands.
+    name: bingo-data
